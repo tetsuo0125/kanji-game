@@ -2,8 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>漢字書き順ゲーム</title>
+  
+  <!-- スマホ・PWA対応 (ホーム画面に追加したときにアプリっぽくする) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="漢字ゲーム">
+  <meta name="theme-color" content="#fce4ec">
   
   <!-- ポップで可愛いフォント -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,19 +27,29 @@
   <div id="app" class="app-container">
     <header class="header">
       <h1>🍄 かん字かきじゅんゲーム 🍄</h1>
+      <button id="sound-toggle" class="sound-btn" title="音のON/OFF">🔊</button>
     </header>
 
     <main class="main-content">
       <!-- 学年選択画面 -->
       <section id="level-selection" class="screen active">
-        <h2>どの学年の漢字にちょうせんする？</h2>
-        <div class="level-grid" id="level-grid">
+        <h2 style="margin-bottom: 20px;">どのレベルにちょうせんする？</h2>
+        
+        <p class="section-title">🎒 小学生レベル</p>
+        <div class="level-grid" id="level-grid-elementary">
           <button class="level-btn btn-primary" data-grade="1">小学1年生<div class="high-score" id="score-grade-1"></div></button>
           <button class="level-btn btn-secondary" data-grade="2">小学2年生<div class="high-score" id="score-grade-2"></div></button>
           <button class="level-btn btn-tertiary" data-grade="3">小学3年生<div class="high-score" id="score-grade-3"></div></button>
           <button class="level-btn btn-quaternary" data-grade="4">小学4年生<div class="high-score" id="score-grade-4"></div></button>
           <button class="level-btn btn-quinary" data-grade="5">小学5年生<div class="high-score" id="score-grade-5"></div></button>
           <button class="level-btn btn-senary" data-grade="6">小学6年生<div class="high-score" id="score-grade-6"></div></button>
+        </div>
+
+        <p class="section-title" style="margin-top: 30px;">🏫 中学生レベル</p>
+        <div class="level-grid" id="level-grid-junior-high">
+          <button class="level-btn btn-jh1" data-grade="jh1">中学1年生<div class="high-score" id="score-grade-jh1"></div></button>
+          <button class="level-btn btn-jh2" data-grade="jh2">中学2年生<div class="high-score" id="score-grade-jh2"></div></button>
+          <button class="level-btn btn-jh3" data-grade="jh3">中学3年生<div class="high-score" id="score-grade-jh3"></div></button>
         </div>
       </section>
 

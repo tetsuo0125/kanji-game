@@ -26,6 +26,10 @@ body {
   align-items: center;
   min-height: 100vh;
   margin: 0;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   background-image: 
     radial-gradient(#ffffff 20%, transparent 20%),
     radial-gradient(#ffffff 20%, transparent 20%);
@@ -47,11 +51,38 @@ body {
   margin: 20px auto;
 }
 
-.header h1 {
-  font-size: 2rem;
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
   margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 1.8rem;
   color: #ff6b6b;
   text-shadow: 2px 2px 0px #ffeaa7;
+}
+
+.sound-btn {
+  background: #ffeaa7;
+  border: 2px solid #fdcb6e;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 0 #fdcb6e;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.sound-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #fdcb6e;
 }
 
 /* Screens */
@@ -101,6 +132,20 @@ body {
 .btn-quaternary { background-color: var(--color-4); color: var(--text-main); }
 .btn-quinary { background-color: var(--color-5); color: var(--text-main); }
 .btn-senary { background-color: var(--color-6); color: var(--text-main); }
+
+.btn-jh1 { background-color: #a29bfe; color: #fff; } /* 中1 - 紫 */
+.btn-jh2 { background-color: #74b9ff; color: #fff; } /* 中2 - 青 */
+.btn-jh3 { background-color: #fab1a0; color: #fff; } /* 中3 - オレンジ */
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: left;
+  margin-left: 10px;
+  color: #d63031;
+  border-bottom: 2px dashed #ffb7b2;
+  padding-bottom: 5px;
+}
 
 .high-score {
   display: block;
