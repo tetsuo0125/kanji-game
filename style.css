@@ -23,11 +23,10 @@ body {
   color: var(--text-main);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* centerからflex-startに変更して上下スクロール見やすく */
   min-height: 100vh;
   margin: 0;
-  overflow: hidden;
-  touch-action: none;
+  /* overflow: hidden を削除してスクロール可能に */
   -webkit-user-select: none;
   user-select: none;
   background-image: 
@@ -47,8 +46,9 @@ body {
   padding: 30px;
   text-align: center;
   position: relative;
-  overflow: hidden;
-  margin: 20px auto;
+  overflow-y: auto; /* はみ出た場合は内部でスクロール可能に */
+  max-height: 95vh;
+  margin: 2vh auto;
 }
 
 .header {
@@ -157,6 +157,15 @@ body {
   color: #d63031;
 }
 
+.stars-display {
+  display: block;
+  font-size: 1.1rem;
+  margin-top: 5px;
+  line-height: 1;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+  min-height: 1.1rem; /* 星がない時も高さのズレを防ぐ */
+}
+
 /* Game Screen */
 .game-header {
   display: flex;
@@ -202,8 +211,10 @@ body {
 }
 
 #kanji-target {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   background: white;
   border: 4px dashed #ffb7b2;
   border-radius: 20px;
@@ -215,6 +226,7 @@ body {
   user-select: none;
   -webkit-user-select: none;
   transition: opacity 0.3s ease-in-out;
+  margin: 0 auto;
 }
 
 /* Add grid lines to kanji area */

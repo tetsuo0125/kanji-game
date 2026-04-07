@@ -140,9 +140,23 @@ function loadHighScores() {
     const record = localStorage.getItem('kanjiHighScore_' + g);
     const scoreElem = document.getElementById('score-grade-' + g);
     if (scoreElem) scoreElem.textContent = record !== null ? `最高記録: ${record}点` : '';
+    
+    // 星の表示処理
+    const clearCount = parseInt(localStorage.getItem('kanjiClearCount_' + g)) || 0;
+    const starsElem = document.getElementById('stars-grade-' + g);
+    if (starsElem) {
+        const starCount = Math.min(clearCount, 5);
+        starsElem.textContent = starCount > 0 ? '⭐'.repeat(starCount) : '';
+    }
   });
 }
-document.addEventListener('DOMContentLoaded', loadHighScores);
+document.addEventListener('DOMContentLoaded', () => {
+    loadHighScores();
+    // iOS/Android向けオーディオアンロック
+    const unlockAudio = () => { if (sounds.ctx && sounds.ctx.state === 'suspended') sounds.ctx.resume(); };
+    document.addEventListener('touchstart', unlockAudio, {once:true});
+    document.addEventListener('click', unlockAudio, {once:true});
+});
 backBtn.addEventListener('click', showLevelSelection);
 restartBtn.addEventListener('click', () => { startGame(currentGrade); });
 reviewBtn.addEventListener('click', () => { startReviewMode(); });
@@ -207,7 +221,7 @@ function preloadNext() {
   }
 }
 
-function loadKanji() {
+async function loadKanji() {
   if (nextKanjiTimeout) clearTimeout(nextKanjiTimeout);
   if (currentKanjiIndex >= currentKanjiList.length) { finishGame(); return; }
   gameState = 'loading';
@@ -218,24 +232,55 @@ function loadKanji() {
   loadingSpinner.classList.remove('hidden');
   kanjiTarget.style.opacity = '0';
 
-  writer = HanziWriter.create('kanji-target', kanji, {
-    width: 250, height: 250, padding: 20, strokeAnimationSpeed: 2.5, delayBetweenStrokes: 50, strokeColor: '#5d4037', radialStyle: true, showOutline: true, outlineColor: '#fce4ec', drawingColor: '#ff6b6b', drawingWidth: 40, showCharacter: false,
-    charDataLoader: function(char, onComplete) {
-      if (dataCache.has(char)) {
-          onComplete(dataCache.get(char));
-          finishLoading();
-      } else {
-          fetch('https://cdn.jsdelivr.net/gh/chanind/hanzi-writer-data-jp@master/data/' + char + '.json')
-            .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-            .then(data => { onComplete(data); finishLoading(); })
-            .catch(() => { currentKanjiIndex++; loadKanji(); });
+  // 1) データの存在を事前に確認・取得 (HanziWriter内部でのエラー画面フリーズを防ぐ)
+  let charData = null;
+  if (dataCache.has(kanji)) {
+      charData = dataCache.get(kanji);
+  } else {
+      try {
+          const res = await fetch('https://cdn.jsdelivr.net/gh/chanind/hanzi-writer-data-jp@master/data/' + kanji + '.json');
+          if (!res.ok) throw new Error("Data not found");
+          charData = await res.json();
+          dataCache.set(kanji, charData);
+      } catch (err) {
+          console.warn("漢字データが存在しません。スキップします:", kanji);
+          currentKanjiIndex++;
+          loadKanji();
+          return;
       }
+  }
+
+  // 2) 画面幅に合わせてCanvasのサイズを最適化する
+  let containerSize = kanjiTarget.clientWidth;
+  if (!containerSize || containerSize === 0) containerSize = 250;
+  const targetSize = Math.min(containerSize - 10, 270); // コンテナより少し小さめに
+
+  writer = HanziWriter.create('kanji-target', kanji, {
+    width: targetSize, 
+    height: targetSize, 
+    padding: targetSize * 0.08, 
+    strokeAnimationSpeed: 2.5, 
+    delayBetweenStrokes: 50, 
+    strokeColor: '#5d4037', 
+    radialStyle: true, 
+    showOutline: true, 
+    outlineColor: '#fce4ec', 
+    drawingColor: '#ff6b6b', 
+    drawingWidth: targetSize * 0.16, 
+    showCharacter: false,
+    charDataLoader: function(char, onComplete) {
+      onComplete(charData);
     }
   });
 
-  function finishLoading() {
-    setTimeout(() => { if (gameState === 'loading') { gameState = 'playing'; loadingSpinner.classList.add('hidden'); kanjiTarget.style.opacity = '1'; startQuiz(); } }, 50);
-  }
+  setTimeout(() => { 
+      if (gameState === 'loading') { 
+          gameState = 'playing'; 
+          loadingSpinner.classList.add('hidden'); 
+          kanjiTarget.style.opacity = '1'; 
+          startQuiz(); 
+      } 
+  }, 50);
 }
 
 function startQuiz() {
@@ -286,6 +331,12 @@ function finishGame() {
       localStorage.setItem('kanjiHighScore_' + currentGrade, score);
       feedbackMessage.innerHTML += `<br><span style="color: #6c5ce7; font-size: 1.2rem;">✨ 新記録達成！ ✨</span>`;
     }
+    
+    // 満点クリアの場合のみ、星用のクリアカウントを増やす
+    if (score === currentKanjiList.length) {
+      const prevClearCount = parseInt(localStorage.getItem('kanjiClearCount_' + currentGrade)) || 0;
+      localStorage.setItem('kanjiClearCount_' + currentGrade, prevClearCount + 1);
+    }
   }
   if (mistakenKanjiList.length > 0) {
     mistakeListElem.textContent = mistakenKanjiList.join("・");
@@ -298,11 +349,18 @@ function finishGame() {
 
 hintBtn.addEventListener('click', () => {
     if (gameState !== 'playing' || !writer) return;
-    writer.quiz({ onMistake: () => {} });
-    writer.animateCharacter({ onComplete: () => { setTimeout(() => { if(writer) writer.hideCharacter(); }, 1000); } });
+    // quizを上書きしないよう、正解の模範解答をうっすら1.5秒だけ表示してヒントとする
+    writer.showCharacter();
+    setTimeout(() => { if(writer && gameState === 'playing') writer.hideCharacter(); }, 1500);
 });
 
 skipBtn.addEventListener('click', () => {
     if (gameState === 'loading' || gameState === 'success' || gameState === 'finished') return;
-    if (writer) { if (nextKanjiTimeout) clearTimeout(nextKanjiTimeout); currentKanjiIndex++; loadKanji(); preloadNext(); }
+    if (writer) { 
+        writer.cancelQuiz(); // 進行中のクイズを確実にキャンセル
+        if (nextKanjiTimeout) clearTimeout(nextKanjiTimeout); 
+        currentKanjiIndex++; 
+        loadKanji(); 
+        preloadNext(); 
+    }
 });
